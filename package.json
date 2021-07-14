@@ -1,0 +1,28 @@
+{
+  "name": "test-nodejs-cicd",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/regentmarkets/test-nodejs-cicd.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/regentmarkets/test-nodejs-cicd/issues"
+  },
+  "homepage": "https://github.com/regentmarkets/test-nodejs-cicd#readme",
+  "dependencies": {
+    "koa": "^2.13.1",
+    "koa-body": "^4.2.0",
+    "koa-logger": "^3.2.1",
+    "koa-router": "^10.0.0",
+    "koa-views": "^7.0.1",
+    "swig": "^1.4.2"
+  }
+}
