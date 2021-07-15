@@ -1,0 +1,73 @@
+version: 2.1
+orbs:
+  node: circleci/node@4.2.1
+
+commands:
+  git_checkout_from_cache:
+    description: "Git checkout"
+    steps:
+      - checkout
+
+  npm_install_from_cache:
+    description: "npm install and save cache"
+    steps:
+      - run:
+          name: Update NPM
+          command: npm install --production
+      - restore_cache:
+          key: npm-cache-{{ checksum "package-lock.json" }}
+      - run:
+          name: Update node modules
+          command: npm install --production
+      - run:
+          name: JUnit test formatter
+          command: npm install mocha-junit-reporter
+      - save_cache:
+          key: npm-cache-{{ checksum "package-lock.json" }}
+          paths:
+          - ./node_modules
+
+  docker_build_push:
+    description: "Build and Push image to Docker Hub"
+    parameters:
+      docker_image_name:
+        type: string
+        default: "test-nodejs-cicd"
+    steps:
+      - setup_remote_docker
+      - run:
+          name: Building docker image
+          command: |
+            TAG=${CIRCLE_TAG:-$CIRCLE_SHA1}
+            docker build -t ${DOCKHUB_ORGANISATION}/<< parameters.docker_image_name >>:${TAG} .
+      - run:
+          name: Pushing Image to docker hub
+          command: |
+            echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
+            docker push ${DOCKHUB_ORGANISATION}/<< parameters.docker_image_name >>
+
+
+jobs:
+
+  build:
+    docker:
+      - image: circleci/node:12.18.0-stretch
+        environment:
+          ACCEPT_EULA: "Y"
+          ECR_PASSWORD: ECR_Password
+    steps:
+      - git_checkout_from_cache
+      - npm_install_from_cache
+      - docker_build_push
+
+workflows:
+  app-tests:
+    jobs:
+      - node/test
+
+  build:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only: /^master$/
