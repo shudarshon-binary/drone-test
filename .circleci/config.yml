@@ -80,7 +80,7 @@ workflows:
             tags:
               only: /^staging.*/
             branches:
-              ignore: /.*/
+              only: /^master$/
       - build_push_production:
           context: CIRCLECI_PROD_ECR_CONTEXT
           filters:
@@ -89,4 +89,4 @@ workflows:
                 - /^production.*/
                 - /^V[0-9].*/
             branches:
-              ignore: /.*/
+              only: /^master$/
