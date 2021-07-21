@@ -1,6 +1,6 @@
 version: 2.1
 orbs:
-  node: circleci/node@4.2.1
+  docker: circleci/docker@1.5.0
 
 commands:
   git_checkout_from_cache:
@@ -34,7 +34,9 @@ commands:
         type: string
         default: "test-nodejs-cicd"
     steps:
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: 19.03.13
+          docker_layer_caching: true
       - run:
           name: Building docker image
           command: |
@@ -49,25 +51,42 @@ commands:
 
 jobs:
 
-  build:
+  build_push_staging:
     docker:
       - image: circleci/node:12.18.0-stretch
         environment:
           ACCEPT_EULA: "Y"
-          ECR_PASSWORD: ECR_Password
+    steps:
+      - git_checkout_from_cache
+      - npm_install_from_cache
+      - docker_build_push
+
+  build_push_production:
+    docker:
+      - image: circleci/node:12.18.0-stretch
+        environment:
+          ACCEPT_EULA: "Y"
     steps:
       - git_checkout_from_cache
       - npm_install_from_cache
       - docker_build_push
 
 workflows:
-  app-tests:
+  ci-workflow:
     jobs:
-      - node/test
-
-  build:
-    jobs:
-      - build:
+      - build_push_staging:
+          context: CIRCLECI_PROD_ECR_CONTEXT
           filters:
+            tags:
+              only: /^staging.*/
             branches:
-              only: /^master$/
+              ignore: /.*/
+      - build_push_production:
+          context: CIRCLECI_PROD_ECR_CONTEXT
+          filters:
+            tags:
+              only:
+                - /^production.*/
+                - /^V[0-9].*/
+            branches:
+              ignore: /.*/
