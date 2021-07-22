@@ -50,10 +50,7 @@ jobs:
 workflows:
   tests:
     jobs:
-      - node/test:
-          filters:
-            branches:
-              ignore: /^master$/
+      - node/test
 
   build_and_test:
     jobs:
