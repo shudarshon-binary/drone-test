@@ -54,11 +54,11 @@ workflows:
 
   daily:
     jobs:
-      - build_and_test
-    triggers:
-    - schedule:
-        cron: 59 20 * * *
-        filters:
-          branches:
-            only:
-            - master
+      - build_and_test:
+    # triggers:
+    # - schedule:
+    #     cron: 59 20 * * *
+          filters:
+            branches:
+              only:
+              - master
