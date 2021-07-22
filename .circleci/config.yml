@@ -50,14 +50,14 @@ jobs:
 workflows:
   tests:
     jobs:
-      - node/test
+      - node/test:
+          filters:
+            branches:
+              ignore: /^master$/
 
   daily:
     jobs:
       - build_and_test:
-    # triggers:
-    # - schedule:
-    #     cron: 59 20 * * *
           filters:
             branches:
               only:
