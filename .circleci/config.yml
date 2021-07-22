@@ -55,7 +55,7 @@ workflows:
             branches:
               ignore: /^master$/
 
-  daily:
+  build_and_test:
     jobs:
       - build_and_test:
           filters:
