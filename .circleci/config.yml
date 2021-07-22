@@ -1,6 +1,7 @@
 version: 2.1
 orbs:
   docker: circleci/docker@1.5.0
+  node: circleci/node@4.2.1
 
 commands:
   git_checkout_from_cache:
@@ -8,7 +9,7 @@ commands:
     steps:
       - checkout
 
-  npm_install_from_cache:
+  build:
     description: "npm install and save cache"
     steps:
       - run:
@@ -26,65 +27,38 @@ commands:
           key: npm-cache-{{ checksum "package-lock.json" }}
           paths:
           - ./node_modules
-
-  docker_build_push:
-    description: "Build and Push image to Docker Hub"
-    parameters:
-      docker_image_name:
-        type: string
-        default: "test-nodejs-cicd"
+  test:
+    description: "Run test"
     steps:
-      - setup_remote_docker:
-          version: 19.03.13
-          docker_layer_caching: true
       - run:
-          name: Building docker image
-          command: |
-            TAG=${CIRCLE_TAG:-$CIRCLE_SHA1}
-            docker build -t ${DOCKHUB_ORGANISATION}/<< parameters.docker_image_name >>:${TAG} .
-      - run:
-          name: Pushing Image to docker hub
-          command: |
-            echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
-            docker push ${DOCKHUB_ORGANISATION}/<< parameters.docker_image_name >>
-
+          name: Run tests
+          command: npm test
 
 jobs:
 
-  build_push_staging:
+  build_and_test:
     docker:
       - image: circleci/node:12.18.0-stretch
         environment:
           ACCEPT_EULA: "Y"
     steps:
       - git_checkout_from_cache
-      - npm_install_from_cache
-      - docker_build_push
+      - build
+      - test
 
-  build_push_production:
-    docker:
-      - image: circleci/node:12.18.0-stretch
-        environment:
-          ACCEPT_EULA: "Y"
-    steps:
-      - git_checkout_from_cache
-      - npm_install_from_cache
-      - docker_build_push
 
 workflows:
-  ci-workflow:
+  tests:
     jobs:
-      - build_push_staging:
-          context: CIRCLECI_PROD_ECR_CONTEXT
-          filters:
-            branches:
-              only: /^master$/
-      - build_push_production:
-          context: CIRCLECI_PROD_ECR_CONTEXT
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only:
-                - /^production.*/
-                - /^V[0-9].*/
+      - node/test
+
+  daily:
+    jobs:
+      - build_and_test
+    triggers:
+    - schedule:
+        cron: 59 20 * * *
+        filters:
+          branches:
+            only:
+            - master
