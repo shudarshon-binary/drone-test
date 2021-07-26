@@ -8,6 +8,10 @@ help: ## Helpful commands
 
 .DEFAULT_GOAL := help
 
+local/env: ## Apply docker env for dev
+	@echo 'cp .env.example .env'
+	cp .env.example .env
+
 local/build: ## Build the docker image in local
 	@echo 'build docker image'
 	sudo docker build -t regentmarkets/test-nodejs-cicd:latest -t regentmarkets/test-nodejs-cicd:$(VERSION) .
@@ -20,4 +24,4 @@ clean: ## Clear docker artifacts from local machine
 	@echo 'clear project containers, volumes and network'
 	sudo docker-compose down
 
-dev: local/build local/run ## Build and deploy docker image in local machine
+dev: local/env local/build local/run ## Build and deploy docker image in local machine
